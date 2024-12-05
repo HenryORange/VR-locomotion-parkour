@@ -32,8 +32,7 @@ public class ManageTrackedSpace : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    { MRUK
-        // maybe with room setup?
+    { // maybe with room setup?
         // var room = MRUK.Instance?.GetCurrentRoom();
         // foreach (var point in room.GetRoomOutline())
         // {
