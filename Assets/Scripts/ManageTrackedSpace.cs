@@ -10,6 +10,7 @@ public class ManageTrackedSpace : MonoBehaviour
 {
     private OVRBoundary boundary;
     private Vector3[] points;
+    private List<GameObject> cubes = new List<GameObject>();
 
     void Start()
     {
@@ -26,13 +27,15 @@ public class ManageTrackedSpace : MonoBehaviour
             cube.transform.position = point;
             cube.transform.localScale = new Vector3(0.1f, 1f, 0.1f);
             cube.GetComponent<MeshRenderer>().material.color = Color.red;
+            cubes.Add(cube);
         }
     }
     
 
     // Update is called once per frame
     void Update()
-    { // maybe with room setup?
+    { 
+        // maybe with room setup?
         // var room = MRUK.Instance?.GetCurrentRoom();
         // foreach (var point in room.GetRoomOutline())
         // {
