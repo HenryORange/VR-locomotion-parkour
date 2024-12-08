@@ -17,6 +17,7 @@ public class PlayAreaSelector : MonoBehaviour
     public Transform groundPlane;
     private List<Vector3> playAreaPoints = new ();
     private List<GameObject> playAreaSpheres = new ();
+    public GameObject redirectedUser;
 
     public OVRInput.Controller controller;
     public LineRenderer laserPointer;
@@ -25,6 +26,14 @@ public class PlayAreaSelector : MonoBehaviour
     public GameObject environment;
     public GameObject parkourSystem;
     public GameObject taskUI;
+
+    private State state;
+
+    private enum State
+    {
+        Setup,
+        Finished
+    }
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -33,42 +42,69 @@ public class PlayAreaSelector : MonoBehaviour
         environment.SetActive(false);
         parkourSystem.SetActive(false);
         taskUI.SetActive(false);
+        state = State.Setup;
+    }
+
+    private void StartGame()
+    {
+        // disable passthrough and change back to skybox
+        OVRManager.instance.isInsightPassthroughEnabled = false;
+        Camera.main.clearFlags = CameraClearFlags.Skybox;
+        
+        // turn on the parkour, ui and environment
+        environment.SetActive(true);
+        parkourSystem.SetActive(true);
+        taskUI.SetActive(true);
+        
+        // stop this script from doing stuff
+        state = State.Finished;
+        laserPointer.enabled = false;
+        foreach(var sphere in playAreaSpheres) sphere.SetActive(false);
+        
+        // enable redirected walking
+        var redirection = redirectedUser.GetComponent<RedirectionManager>();
+        redirection.enabled = true;
+        var simulation = redirectedUser.GetComponent<SimulationManager>();
+        simulation.enabled = true;
     }
     
     // TODO make laser pointer user meta controllers
     void Update()
     {
-        Vector3 controllerPosition = OVRInput.GetLocalControllerPosition(controller);
-        Quaternion controllerRotation = OVRInput.GetLocalControllerRotation(controller);
-        
-        Ray ray = new Ray(controllerPosition, controllerRotation * Vector3.forward);
-
-        UnityEngine.Plane plane = new(groundPlane.up, groundPlane.position);
-        
-        bool result = plane.Raycast(ray, out float hit);
-        var rayHit = ray.GetPoint(hit);
-        UpdateLaserPointer(controllerPosition, ray.direction, result, rayHit);
-        
-        // TODO only do if there isn't a point yet, also add resetting the bound creation and button to confirm chosen bounds
-        if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger))
+        switch (state)
         {
-            if (result)
-            {
-                playAreaPoints.Add(rayHit);
-                playAreaSpheres.Add(Instantiate(pointPrefab, rayHit, Quaternion.identity));
-            }
-        }
+            case State.Setup:
+                Vector3 controllerPosition = OVRInput.GetLocalControllerPosition(controller);
+                Quaternion controllerRotation = OVRInput.GetLocalControllerRotation(controller);
+        
+                Ray ray = new Ray(controllerPosition, controllerRotation * Vector3.forward);
 
-        if (OVRInput.GetDown(OVRInput.Button.Two))
-        {
-            if (CreateLargestInnerRectangle(playAreaPoints))
-            {
-                OVRManager.instance.isInsightPassthroughEnabled = false;
-                Camera.main.clearFlags = CameraClearFlags.Skybox;
-                environment.SetActive(true);
-                parkourSystem.SetActive(true);
-                taskUI.SetActive(true);
-            }
+                UnityEngine.Plane plane = new(groundPlane.up, groundPlane.position);
+        
+                bool result = plane.Raycast(ray, out float hit);
+                var rayHit = ray.GetPoint(hit);
+                UpdateLaserPointer(controllerPosition, ray.direction, result, rayHit);
+        
+                // TODO only do if there isn't a point yet, also add resetting the bound creation and button to confirm chosen bounds
+                if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger))
+                {
+                    if (result)
+                    {
+                        playAreaPoints.Add(rayHit);
+                        playAreaSpheres.Add(Instantiate(pointPrefab, rayHit, Quaternion.identity));
+                    }
+                }
+
+                if (OVRInput.GetDown(OVRInput.Button.Two))
+                {
+                    if (CreateLargestInnerRectangle(playAreaPoints))
+                    {
+                        StartGame();
+                    }
+                }
+                break;
+            case State.Finished:
+                break;
         }
     }
 
@@ -97,25 +133,37 @@ public class PlayAreaSelector : MonoBehaviour
         float angle;
         if (LargestInteriorRectangle.CalculateLargestInteriorRectangleWithAngleSweep(projectedPoints.ToArray(), 1, out bounds, out angle))
         {
-            // Create a new cube
-            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // Create a new plane
+            GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
             
-            // Set cube dimensions and position
-            Vector3 size = new Vector3(
-                bounds.length_a, // Width
-                0.01f, // Height (thin for visualization)
-                bounds.length_b // Depth
-            );
+            // Set plane dimensions and position
+            Vector3 planeSize = new Vector3(bounds.length_a / 10f, 1f, bounds.length_b / 10f);
+            Vector3 colliderSize = new Vector3(bounds.length_a, 2f, bounds.length_b);
             
             Vector3 center = new (bounds.centre.x, 0, bounds.centre.y);
 
-            // Update cube's position and scale
-            cube.transform.position = center;
-            cube.transform.localScale = size;
-            cube.transform.rotation = Quaternion.Euler(0, angle, 0);
+            // Update plane's position and scale
+            plane.transform.position = center;
+            plane.transform.localScale = planeSize;
+            plane.transform.rotation = Quaternion.Euler(0, angle, 0);
+            plane.transform.parent = transform;
+            
+            plane.GetComponent<Renderer>().material.color = Color.green;
+            plane.name = "TrackedSpacePlane";
+            
 
-            // Optional: Set cube color or material
-            cube.GetComponent<Renderer>().material.color = Color.green;
+            GameObject collider = new();
+            collider.transform.position = center + new Vector3(0f, 1f, 0f);
+            collider.transform.localScale = colliderSize;
+            collider.transform.rotation = Quaternion.Euler(0, angle, 0);
+            collider.transform.parent = transform;
+
+            collider.AddComponent<BoxCollider>();
+            collider.AddComponent<ResetTrigger>();
+            var resetTrigger = collider.GetComponent<ResetTrigger>();
+            resetTrigger.bodyCollider = collider.GetComponent<BoxCollider>();
+            resetTrigger.RESET_TRIGGER_BUFFER = 0.0f;
+            collider.name = "ResetCollider";
             return true;
         }
         else

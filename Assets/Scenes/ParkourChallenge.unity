@@ -1351,7 +1351,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &102448541
 Transform:
   m_ObjectHideFlags: 0
@@ -2405,7 +2405,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1531687978}
+  m_Father: {fileID: 307268172}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &149484641
 PrefabInstance:
@@ -5086,6 +5086,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 307268172}
+  - component: {fileID: 307268174}
+  - component: {fileID: 307268173}
+  - component: {fileID: 307268175}
   m_Layer: 0
   m_Name: RedirectedUser
   m_TagString: Untagged
@@ -5107,9 +5110,96 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2084374380}
+  - {fileID: 142179480}
   - {fileID: 1531687978}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &307268173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307268171}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4936f2eec754174cb7e557e06c62c25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  redirectionManager: {fileID: 307268174}
+  runInSimulationMode: 0
+  condAlgorithm: 3
+  condReset: 1
+  condPath: 4
+  condExperiment: 0
+  MAX_TRIALS: 1
+  runAtFullSpeed: 0
+  onlyRandomizeForward: 1
+  averageTrialResults: 0
+  DISTANCE_TO_WAYPOINT_THRESHOLD: 0.3
+  experimentInProgress: 0
+  waypoints: []
+  waypointIterator: 0
+  userIsWalking: 0
+--- !u!114 &307268174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307268171}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306dea4159f34664e80b61f46bbd9c21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  runInTestMode: 0
+  MOVEMENT_CONTROLLER: 2
+  MAX_TRANS_GAIN: 0.26
+  MIN_TRANS_GAIN: -0.14
+  MAX_ROT_GAIN: 0.49
+  MIN_ROT_GAIN: -0.2
+  CURVATURE_RADIUS: 7.5
+  headTransform: {fileID: 835662727}
+  useManualTime: 0
+  targetFPS: 60
+  body: {fileID: 0}
+  trackedSpace: {fileID: 0}
+  redirector: {fileID: 0}
+  resetter: {fileID: 0}
+  resetTrigger: {fileID: 0}
+  trailDrawer: {fileID: 0}
+  simulationManager: {fileID: 0}
+  simulatedWalker: {fileID: 0}
+  keyboardController: {fileID: 0}
+  snapshotGenerator: {fileID: 0}
+  statisticsLogger: {fileID: 0}
+  currPos: {x: 0, y: 0, z: 0}
+  currPosReal: {x: 0, y: 0, z: 0}
+  prevPos: {x: 0, y: 0, z: 0}
+  prevPosReal: {x: 0, y: 0, z: 0}
+  currDir: {x: 0, y: 0, z: 0}
+  currDirReal: {x: 0, y: 0, z: 0}
+  prevDir: {x: 0, y: 0, z: 0}
+  prevDirReal: {x: 0, y: 0, z: 0}
+  deltaPos: {x: 0, y: 0, z: 0}
+  deltaDir: 0
+  targetWaypoint: {fileID: 0}
+  inReset: 0
+  startTimeOfProgram: 
+--- !u!114 &307268175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307268171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06732bce9ea3dcd419d50604456b9bbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  redirectionManager: {fileID: 0}
 --- !u!1001 &309405670
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23936,7 +24026,7 @@ GameObject:
   - component: {fileID: 1531687978}
   - component: {fileID: 1531687980}
   m_Layer: 0
-  m_Name: TrackedSpace
+  m_Name: Tracked Space
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23955,7 +24045,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 142179480}
   - {fileID: 1624984450}
   m_Father: {fileID: 307268172}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -23974,6 +24063,7 @@ MonoBehaviour:
   pointPrefab: {fileID: 6759136975323379157, guid: 4afd02544d2c79b478ff0781563d5519,
     type: 3}
   groundPlane: {fileID: 1624984450}
+  redirectedUser: {fileID: 307268171}
   controller: 2
   laserPointer: {fileID: 1624984454}
   laserMaxDistance: 10
@@ -25475,7 +25565,7 @@ GameObject:
   - component: {fileID: 1624984451}
   - component: {fileID: 1624984454}
   m_Layer: 0
-  m_Name: Plane
+  m_Name: SelectionPlane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
