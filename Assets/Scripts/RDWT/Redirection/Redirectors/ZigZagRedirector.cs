@@ -236,11 +236,12 @@ public class ZigZagRedirector : Redirector
             g_t = 0;
 
         // Translation Gain
-        InjectTranslation(g_t * redirectionManager.deltaPos);
+        // InjectTranslation(g_t * redirectionManager.deltaPos);
         // Rotation Gain
-        InjectRotation(g_r * redirectionManager.deltaDir);
+        // InjectRotation(g_r * redirectionManager.deltaDir);
+        this.transform.RotateAround(Utilities.FlattenedPos3D(redirectionManager.headTransform.position), Vector3.up, g_r * redirectionManager.deltaDir);
         // Curvature Gain
-        InjectCurvature(g_c * redirectionManager.deltaPos.magnitude);
+        // InjectCurvature(g_c * redirectionManager.deltaPos.magnitude);
 
         //if (redirectionManager.deltaPos.magnitude / redirectionManager.GetDeltaTime() < SLOW_DOWN_VELOCITY_THRESHOLD)
             //print("REPORTED USER SPEED: " + (redirectionManager.deltaPos.magnitude / redirectionManager.GetDeltaTime()).ToString("F4"));

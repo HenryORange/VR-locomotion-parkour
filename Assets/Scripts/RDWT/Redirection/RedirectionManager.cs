@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using Redirection;
+using TMPro;
+using Unity.Mathematics;
+using Random = UnityEngine.Random;
+
 public class RedirectionManager : MonoBehaviour {
 
     public enum MovementController { Keyboard, AutoPilot, Tracker };
@@ -87,6 +91,26 @@ public class RedirectionManager : MonoBehaviour {
 
     private float simulatedTime = 0;
 
+    private float velocity = 0;
+
+    private float[] velocityRange = {10, 15};
+    
+    private Camera camera;
+
+    private Vector2 thumbstickInput;
+
+    private TextMeshPro levelText;
+
+    enum SpeedStates
+    {
+        Slow,
+        Medium,
+        Fast
+    }
+    
+    private SpeedStates currentSpeedState = SpeedStates.Medium;
+    private bool canCycle = true;
+    
     void Awake()
     {
     }
@@ -118,6 +142,9 @@ public class RedirectionManager : MonoBehaviour {
         SetReferenceForSimulatedWalker();
         SetReferenceForKeyboardController();
         SetReferenceForSnapshotGenerator();
+        camera = Camera.main;
+        levelText = GameObject.Find("LevelText").GetComponent<TextMeshPro>();
+        
         SetReferenceForStatisticsLogger();
 
         // The rule is to have RedirectionManager call all "Awake"-like functions that rely on RedirectionManager as an "Initialize" call.
@@ -134,8 +161,72 @@ public class RedirectionManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        if (canCycle)
+        {
+            if (OVRInput.Get(OVRInput.Button.PrimaryThumbstickUp, OVRInput.Controller.RTouch))
+            {
+                CycleStateUp();
+            }
+            else if (OVRInput.Get(OVRInput.Button.PrimaryThumbstickDown, OVRInput.Controller.RTouch))
+            {
+                CycleStateDown();
+            }
+        }
 
-	}
+        var forward = camera.transform.forward;
+        forward.y = 0;
+        transform.position += forward.normalized * (Time.deltaTime * velocity);
+
+        const float groundFriction = (float) (0.005 * 9.81);
+        
+        velocity = velocity > 0 ? velocity - groundFriction  : 0;
+    }
+
+    private void CycleStateUp()
+    {
+        if (currentSpeedState != SpeedStates.Fast)
+        {
+            currentSpeedState++;
+            HandleSpeedStateChange();
+        }
+
+        StartCoroutine(DebounceInput());
+    }
+
+    private void CycleStateDown()
+    {
+        if (currentSpeedState != SpeedStates.Slow)
+        {
+            currentSpeedState--;
+            HandleSpeedStateChange();
+        }
+
+        StartCoroutine(DebounceInput());
+    }
+
+    private void HandleSpeedStateChange()
+    {
+        switch (currentSpeedState)
+        {
+            case SpeedStates.Slow:
+                velocityRange = new float[] { 1, 5 };
+                break;
+            case SpeedStates.Medium:
+                velocityRange = new float[] { 5, 10 };
+                break;
+            case SpeedStates.Fast:
+                velocityRange = new float[] { 10, 15 };
+                break;
+        }
+        levelText.text = currentSpeedState.ToString();
+    }
+
+    private System.Collections.IEnumerator DebounceInput()
+    {
+        canCycle = false;
+        yield return new WaitForSeconds(0.3f);
+        canCycle = true;
+    }
 
     void LateUpdate()
     {
@@ -370,6 +461,7 @@ public class RedirectionManager : MonoBehaviour {
     {
         //print("RESET END");
         resetter.FinalizeReset();
+        velocity = Random.Range(velocityRange[0], velocityRange[1]);
         inReset = false;
     }
 

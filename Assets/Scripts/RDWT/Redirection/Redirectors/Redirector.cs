@@ -47,7 +47,7 @@ public abstract class Redirector : MonoBehaviour
     /// Applies rotation to Redirected User. The neat thing about calling it this way is that we can keep track of gains applied.
     /// </summary>
     /// <param name="translation"></param>
-    protected void InjectTranslation(Vector3 translation)
+    public void InjectTranslation(Vector3 translation)
     {
         if (translation.magnitude > 0)
         {
