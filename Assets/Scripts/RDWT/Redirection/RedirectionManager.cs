@@ -1,38 +1,40 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
+using Oculus.Interaction;
 using Redirection;
 using TMPro;
 using Unity.Mathematics;
 using Random = UnityEngine.Random;
 
-public class RedirectionManager : MonoBehaviour {
-
-    public enum MovementController { Keyboard, AutoPilot, Tracker };
+public class RedirectionManager : MonoBehaviour
+{
+    public enum MovementController
+    {
+        Keyboard,
+        AutoPilot,
+        Tracker
+    };
 
     [Tooltip("Select if you wish to run simulation from commandline in Unity batchmode.")]
     public bool runInTestMode = false;
 
     [Tooltip("How user movement is controlled.")]
     public MovementController MOVEMENT_CONTROLLER = MovementController.Tracker;
-    
-    [Tooltip("Maximum translation gain applied")]
-    [Range(0, 5)]
+
+    [Tooltip("Maximum translation gain applied")] [Range(0, 5)]
     public float MAX_TRANS_GAIN = 0.26F;
-    
-    [Tooltip("Minimum translation gain applied")]
-    [Range(-0.99F, 0)]
+
+    [Tooltip("Minimum translation gain applied")] [Range(-0.99F, 0)]
     public float MIN_TRANS_GAIN = -0.14F;
-    
-    [Tooltip("Maximum rotation gain applied")]
-    [Range(0, 5)]
+
+    [Tooltip("Maximum rotation gain applied")] [Range(0, 5)]
     public float MAX_ROT_GAIN = 0.49F;
-    
-    [Tooltip("Minimum rotation gain applied")]
-    [Range(-0.99F, 0)]
+
+    [Tooltip("Minimum rotation gain applied")] [Range(-0.99F, 0)]
     public float MIN_ROT_GAIN = -0.2F;
 
-    [Tooltip("Radius applied by curvature gain")]
-    [Range(1, 23)]
+    [Tooltip("Radius applied by curvature gain")] [Range(1, 23)]
     public float CURVATURE_RADIUS = 7.5F;
 
     [Tooltip("The game object that is being physically tracked (probably user's head)")]
@@ -43,80 +45,65 @@ public class RedirectionManager : MonoBehaviour {
 
     [Tooltip("Target simulated framerate in auto-pilot mode")]
     public float targetFPS = 60;
-    
-    
-
-    
-    [HideInInspector]
-    public Transform body;
-    [HideInInspector]
-    public Transform trackedSpace;
-
-    [HideInInspector]
-    public Redirector redirector;
-    [HideInInspector]
-    public Resetter resetter;
-    [HideInInspector]
-    public ResetTrigger resetTrigger;
-    [HideInInspector]
-    public TrailDrawer trailDrawer;
-    [HideInInspector]
-    public SimulationManager simulationManager;
-    [HideInInspector]
-    public SimulatedWalker simulatedWalker;
-    [HideInInspector]
-    public KeyboardController keyboardController;
-    [HideInInspector]
-    public SnapshotGenerator snapshotGenerator;
-    [HideInInspector]
-    public StatisticsLogger statisticsLogger;
-    
-    [HideInInspector]
-    public Vector3 currPos, currPosReal, prevPos, prevPosReal;
-    [HideInInspector]
-    public Vector3 currDir, currDirReal, prevDir, prevDirReal;
-    [HideInInspector]
-    public Vector3 deltaPos;
-    [HideInInspector]
-    public float deltaDir;
-    [HideInInspector]
-    public Transform targetWaypoint;
 
 
-    [HideInInspector]
-    public bool inReset = false;
+    [HideInInspector] public Transform body;
+    [HideInInspector] public Transform trackedSpace;
 
-    [HideInInspector]
-    public string startTimeOfProgram;
+    [HideInInspector] public Redirector redirector;
+    [HideInInspector] public Resetter resetter;
+    [HideInInspector] public ResetTrigger resetTrigger;
+    [HideInInspector] public TrailDrawer trailDrawer;
+    [HideInInspector] public SimulationManager simulationManager;
+    [HideInInspector] public SimulatedWalker simulatedWalker;
+    [HideInInspector] public KeyboardController keyboardController;
+    [HideInInspector] public SnapshotGenerator snapshotGenerator;
+    [HideInInspector] public StatisticsLogger statisticsLogger;
+
+    [HideInInspector] public Vector3 currPos, currPosReal, prevPos, prevPosReal;
+    [HideInInspector] public Vector3 currDir, currDirReal, prevDir, prevDirReal;
+    [HideInInspector] public Vector3 deltaPos;
+    [HideInInspector] public float deltaDir;
+    [HideInInspector] public Transform targetWaypoint;
+
+
+    [HideInInspector] public bool inReset = false;
+
+    [HideInInspector] public string startTimeOfProgram;
 
     private float simulatedTime = 0;
 
     private float velocity = 0;
 
-    private float[] velocityRange = {10, 15};
-    
+    private float[] velocityRange = { 10, 15 };
+
     private Camera camera;
 
     private Vector2 thumbstickInput;
 
-    private TextMeshPro levelText;
-
-    enum SpeedStates
+    public enum SpeedStates
     {
         Slow,
         Medium,
         Fast
     }
-    
+
     private SpeedStates currentSpeedState = SpeedStates.Medium;
-    private bool canCycle = true;
-    
+
+    private Color selectedColor;
+    private Color unselectedColor;
+
+    public GameObject slowButtonText;
+    public GameObject mediumButtonText;
+    public GameObject fastButtonText;
+
     void Awake()
     {
     }
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    void Start()
+    {
         startTimeOfProgram = System.DateTime.Now.ToString("yyyy MM dd HH:mm:ss");
 
         GetBody();
@@ -130,7 +117,7 @@ public class RedirectionManager : MonoBehaviour {
         GetResetter();
         GetResetTrigger();
         GetTrailDrawer();
-        
+
         GetSnapshotGenerator();
         GetStatisticsLogger();
         SetReferenceForRedirector();
@@ -138,13 +125,15 @@ public class RedirectionManager : MonoBehaviour {
         SetReferenceForResetTrigger();
         SetBodyReferenceForResetTrigger();
         SetReferenceForTrailDrawer();
-        
+
         SetReferenceForSimulatedWalker();
         SetReferenceForKeyboardController();
         SetReferenceForSnapshotGenerator();
         camera = Camera.main;
-        levelText = GameObject.Find("LevelText").GetComponent<TextMeshPro>();
-        
+
+        selectedColor =  new Color(1, 31/255f, 63/255f);
+        unselectedColor =  new Color(1, 1, 1);
+
         SetReferenceForStatisticsLogger();
 
         // The rule is to have RedirectionManager call all "Awake"-like functions that rely on RedirectionManager as an "Initialize" call.
@@ -157,75 +146,58 @@ public class RedirectionManager : MonoBehaviour {
         {
             MOVEMENT_CONTROLLER = MovementController.AutoPilot;
         }
-	}
-	
-	// Update is called once per frame
-	void Update () {
-        if (canCycle)
-        {
-            if (OVRInput.Get(OVRInput.Button.PrimaryThumbstickUp, OVRInput.Controller.RTouch))
-            {
-                CycleStateUp();
-            }
-            else if (OVRInput.Get(OVRInput.Button.PrimaryThumbstickDown, OVRInput.Controller.RTouch))
-            {
-                CycleStateDown();
-            }
-        }
+    }
 
+    // Update is called once per frame
+    void Update()
+    {
         var forward = camera.transform.forward;
         forward.y = 0;
         transform.position += forward.normalized * (Time.deltaTime * velocity);
 
-        const float groundFriction = (float) (0.005 * 9.81);
-        
-        velocity = velocity > 0 ? velocity - groundFriction  : 0;
+        const float groundFriction = (float)(0.005 * 9.81);
+
+        velocity = velocity > 0 ? velocity - groundFriction : 0;
     }
 
-    private void CycleStateUp()
+    public void OnSlowSelected()
     {
-        if (currentSpeedState != SpeedStates.Fast)
+        currentSpeedState = SpeedStates.Slow;
+        ChangeSelected("Slow");
+    }
+
+    public void OnMediumSelected()
+    {
+        currentSpeedState = SpeedStates.Medium;
+        ChangeSelected("Medium");
+    }
+
+    public void OnFastSelected()
+    {
+        currentSpeedState = SpeedStates.Fast;
+        ChangeSelected("Fast");
+    }
+
+    private void ChangeSelected(string state)
+    {
+        switch (state)
         {
-            currentSpeedState++;
-            HandleSpeedStateChange();
-        }
-
-        StartCoroutine(DebounceInput());
-    }
-
-    private void CycleStateDown()
-    {
-        if (currentSpeedState != SpeedStates.Slow)
-        {
-            currentSpeedState--;
-            HandleSpeedStateChange();
-        }
-
-        StartCoroutine(DebounceInput());
-    }
-
-    private void HandleSpeedStateChange()
-    {
-        switch (currentSpeedState)
-        {
-            case SpeedStates.Slow:
-                velocityRange = new float[] { 1, 5 };
+            case "Slow":
+                slowButtonText.GetComponent<TextMeshPro>().color = selectedColor;
+                mediumButtonText.GetComponent<TextMeshPro>().color = unselectedColor;
+                fastButtonText.GetComponent<TextMeshPro>().color = unselectedColor;
                 break;
-            case SpeedStates.Medium:
-                velocityRange = new float[] { 5, 10 };
+            case "Medium":
+                slowButtonText.GetComponent<TextMeshPro>().color = unselectedColor;
+                mediumButtonText.GetComponent<TextMeshPro>().color = selectedColor;
+                fastButtonText.GetComponent<TextMeshPro>().color = unselectedColor;
                 break;
-            case SpeedStates.Fast:
-                velocityRange = new float[] { 10, 15 };
+            case "Fast":
+                slowButtonText.GetComponent<TextMeshPro>().color = unselectedColor;
+                mediumButtonText.GetComponent<TextMeshPro>().color = unselectedColor;
+                fastButtonText.GetComponent<TextMeshPro>().color = selectedColor;
                 break;
         }
-        levelText.text = currentSpeedState.ToString();
-    }
-
-    private System.Collections.IEnumerator DebounceInput()
-    {
-        canCycle = false;
-        yield return new WaitForSeconds(0.3f);
-        canCycle = true;
     }
 
     void LateUpdate()
@@ -476,7 +448,7 @@ public class RedirectionManager : MonoBehaviour {
     public void UpdateRedirector(System.Type redirectorType)
     {
         RemoveRedirector();
-        this.redirector = (Redirector) this.gameObject.AddComponent(redirectorType);
+        this.redirector = (Redirector)this.gameObject.AddComponent(redirectorType);
         //this.redirector = this.gameObject.GetComponent<Redirector>();
         SetReferenceForRedirector();
     }
@@ -494,7 +466,7 @@ public class RedirectionManager : MonoBehaviour {
         RemoveResetter();
         if (resetterType != null)
         {
-            this.resetter = (Resetter) this.gameObject.AddComponent(resetterType);
+            this.resetter = (Resetter)this.gameObject.AddComponent(resetterType);
             //this.resetter = this.gameObject.GetComponent<Resetter>();
             SetReferenceForResetter();
             if (this.resetter != null)

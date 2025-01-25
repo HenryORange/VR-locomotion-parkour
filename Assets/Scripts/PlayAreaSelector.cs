@@ -18,6 +18,7 @@ public class PlayAreaSelector : MonoBehaviour
     private List<Vector3> playAreaPoints = new ();
     private List<GameObject> playAreaSpheres = new ();
     public GameObject redirectedUser;
+    public GameObject speedSelector;
 
     public OVRInput.Controller controller;
     public LineRenderer laserPointer;
@@ -43,6 +44,12 @@ public class PlayAreaSelector : MonoBehaviour
         parkourSystem.SetActive(false);
         taskUI.SetActive(false);
         state = State.Setup;
+        
+        playAreaPoints.Add(new Vector3(1.0f, 0.0f, 1.0f));
+        playAreaPoints.Add(new Vector3(-1.0f, 0.0f, 1.0f));
+        playAreaPoints.Add(new Vector3(-1.0f, 0.0f, -1.0f));
+        playAreaPoints.Add(new Vector3(1.0f, 0.0f, -1.0f));
+        StartGame();
     }
 
     private void StartGame()
@@ -66,6 +73,7 @@ public class PlayAreaSelector : MonoBehaviour
         redirection.enabled = true;
         var simulation = redirectedUser.GetComponent<SimulationManager>();
         simulation.enabled = true;
+        speedSelector.SetActive(true);
     }
     
     // TODO make laser pointer user meta controllers
