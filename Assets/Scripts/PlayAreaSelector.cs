@@ -45,11 +45,11 @@ public class PlayAreaSelector : MonoBehaviour
         taskUI.SetActive(false);
         state = State.Setup;
         
-        playAreaPoints.Add(new Vector3(1.0f, 0.0f, 1.0f));
-        playAreaPoints.Add(new Vector3(-1.0f, 0.0f, 1.0f));
-        playAreaPoints.Add(new Vector3(-1.0f, 0.0f, -1.0f));
-        playAreaPoints.Add(new Vector3(1.0f, 0.0f, -1.0f));
-        StartGame();
+        // playAreaPoints.Add(new Vector3(1.0f, 0.0f, 1.0f));
+        // playAreaPoints.Add(new Vector3(-1.0f, 0.0f, 1.0f));
+        // playAreaPoints.Add(new Vector3(-1.0f, 0.0f, -1.0f));
+        // playAreaPoints.Add(new Vector3(1.0f, 0.0f, -1.0f));
+        // StartGame();
     }
 
     private void StartGame()
@@ -74,9 +74,9 @@ public class PlayAreaSelector : MonoBehaviour
         var simulation = redirectedUser.GetComponent<SimulationManager>();
         simulation.enabled = true;
         speedSelector.SetActive(true);
+        groundPlane.gameObject.SetActive(false);
     }
     
-    // TODO make laser pointer user meta controllers
     void Update()
     {
         switch (state)

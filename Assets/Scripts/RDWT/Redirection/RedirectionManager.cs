@@ -75,7 +75,7 @@ public class RedirectionManager : MonoBehaviour
 
     private float velocity = 0;
 
-    private float[] velocityRange = { 10, 15 };
+    private float[,] velocityRange = { { 1, 5 }, { 10, 15 }, { 20, 25 } };
 
     private Camera camera;
 
@@ -131,8 +131,8 @@ public class RedirectionManager : MonoBehaviour
         SetReferenceForSnapshotGenerator();
         camera = Camera.main;
 
-        selectedColor =  new Color(1, 31/255f, 63/255f);
-        unselectedColor =  new Color(1, 1, 1);
+        selectedColor = new Color(1, 31 / 255f, 63 / 255f);
+        unselectedColor = new Color(1, 1, 1);
 
         SetReferenceForStatisticsLogger();
 
@@ -433,7 +433,7 @@ public class RedirectionManager : MonoBehaviour
     {
         //print("RESET END");
         resetter.FinalizeReset();
-        velocity = Random.Range(velocityRange[0], velocityRange[1]);
+        velocity = Random.Range(velocityRange[(int)currentSpeedState, 0], velocityRange[(int)currentSpeedState, 1]);
         inReset = false;
     }
 
