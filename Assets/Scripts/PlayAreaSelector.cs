@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Evryway;
 using Oculus.Interaction;
+using Oculus.Interaction.PoseDetection;
 using Oculus.Interaction.Samples;
 using Oculus.Platform.Models;
 using UnityEngine;
@@ -14,21 +16,30 @@ using Vector3 = UnityEngine.Vector3;
 public class PlayAreaSelector : MonoBehaviour
 {
     public GameObject pointPrefab;
+    public GameObject pointPreviewPrefab;
     public Transform groundPlane;
     private List<Vector3> playAreaPoints = new ();
     private List<GameObject> playAreaSpheres = new ();
     public GameObject redirectedUser;
-    public GameObject speedSelector;
-
-    public OVRInput.Controller controller;
-    public LineRenderer laserPointer;
-    public float laserMaxDistance = 10.0f;
     
+    public GameObject speedSelector;
+    public SelectorOnArm speedSelectorScript;
     public GameObject environment;
     public GameObject parkourSystem;
     public GameObject taskUI;
+    public GameObject taskUICanvas;
+    public Snow snowGenerator;
 
     private State state;
+    private bool canTap = true;
+
+    public OVRHand leftHand;
+    public OVRHand rightHand;
+    private OVRSkeleton handSkeleton;
+    private OVRBone palm;
+    public ActiveStateSelector startGamePose;
+    public ActiveStateSelector resetAreaSelectionPose;
+    public Material planeMaterial;
 
     private enum State
     {
@@ -43,13 +54,36 @@ public class PlayAreaSelector : MonoBehaviour
         environment.SetActive(false);
         parkourSystem.SetActive(false);
         taskUI.SetActive(false);
+        speedSelector.SetActive(false);
+        speedSelectorScript.enabled = false;
+        snowGenerator.enabled = false;
+        taskUICanvas.SetActive(false);
         state = State.Setup;
-        
-        // playAreaPoints.Add(new Vector3(1.0f, 0.0f, 1.0f));
-        // playAreaPoints.Add(new Vector3(-1.0f, 0.0f, 1.0f));
-        // playAreaPoints.Add(new Vector3(-1.0f, 0.0f, -1.0f));
-        // playAreaPoints.Add(new Vector3(1.0f, 0.0f, -1.0f));
-        // StartGame();
+
+        startGamePose.WhenSelected += TryToStartGame;
+        resetAreaSelectionPose.WhenSelected += ClearAreaPoints;
+        handSkeleton = rightHand.gameObject.GetComponent<OVRSkeleton>();
+        StartCoroutine(WaitForSkeleton());
+    }
+    
+    private IEnumerator WaitForSkeleton()
+    {
+        while (!handSkeleton.IsInitialized)
+        {
+            yield return null;
+        }
+
+        palm = handSkeleton.Bones[(int)OVRSkeleton.BoneId.XRHand_Palm];
+    }
+
+    private void ClearAreaPoints()
+    {
+        playAreaPoints.Clear();
+        foreach (var playAreaSphere in playAreaSpheres)
+        {
+            Destroy(playAreaSphere);
+        }
+        playAreaSpheres.Clear();
     }
 
     private void StartGame()
@@ -62,18 +96,23 @@ public class PlayAreaSelector : MonoBehaviour
         environment.SetActive(true);
         parkourSystem.SetActive(true);
         taskUI.SetActive(true);
+        speedSelector.SetActive(true);
+        speedSelectorScript.enabled = true;
+        snowGenerator.enabled = true;
+        taskUICanvas.SetActive(true);
+        
+        resetAreaSelectionPose.WhenSelected -= ClearAreaPoints;
         
         // stop this script from doing stuff
         state = State.Finished;
-        laserPointer.enabled = false;
         foreach(var sphere in playAreaSpheres) sphere.SetActive(false);
+        pointPreviewPrefab.SetActive(false);
         
         // enable redirected walking
         var redirection = redirectedUser.GetComponent<RedirectionManager>();
         redirection.enabled = true;
         var simulation = redirectedUser.GetComponent<SimulationManager>();
         simulation.enabled = true;
-        speedSelector.SetActive(true);
         groundPlane.gameObject.SetActive(false);
     }
     
@@ -82,32 +121,29 @@ public class PlayAreaSelector : MonoBehaviour
         switch (state)
         {
             case State.Setup:
-                Vector3 controllerPosition = OVRInput.GetLocalControllerPosition(controller);
-                Quaternion controllerRotation = OVRInput.GetLocalControllerRotation(controller);
-        
-                Ray ray = new Ray(controllerPosition, controllerRotation * Vector3.forward);
+                if (palm == null) return;
+                var rightHandPosition = palm.Transform.position;
+                var rightHandRotation = transform.rotation * OVRInput.GetLocalControllerRotation(OVRInput.Controller.RHand);
+                var palmNormal = -(rightHandRotation * Vector3.up);
+                
+                var ray = new Ray(rightHandPosition, palmNormal);
 
-                UnityEngine.Plane plane = new(groundPlane.up, groundPlane.position);
+                var plane = new UnityEngine.Plane(groundPlane.up, groundPlane.position);
         
-                bool result = plane.Raycast(ray, out float hit);
+                var result = plane.Raycast(ray, out var hit);
                 var rayHit = ray.GetPoint(hit);
-                UpdateLaserPointer(controllerPosition, ray.direction, result, rayHit);
+                ShowBallPreview(rayHit, result);
         
                 // TODO only do if there isn't a point yet, also add resetting the bound creation and button to confirm chosen bounds
-                if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger))
+                if (leftHand.GetFingerIsPinching(OVRHand.HandFinger.Index) &&
+                    leftHand.GetFingerConfidence(OVRHand.HandFinger.Index) == OVRHand.TrackingConfidence.High)
                 {
                     if (result)
                     {
+                        if (!canTap) return;
+                        StartCoroutine(DebounceTapInput());
                         playAreaPoints.Add(rayHit);
                         playAreaSpheres.Add(Instantiate(pointPrefab, rayHit, Quaternion.identity));
-                    }
-                }
-
-                if (OVRInput.GetDown(OVRInput.Button.Two))
-                {
-                    if (CreateLargestInnerRectangle(playAreaPoints))
-                    {
-                        StartGame();
                     }
                 }
                 break;
@@ -115,17 +151,32 @@ public class PlayAreaSelector : MonoBehaviour
                 break;
         }
     }
-
-    public void UpdateLaserPointer(Vector3 origin, Vector3 direction, bool result,  Vector3 hit)
+    
+    private IEnumerator DebounceTapInput()
     {
-        laserPointer.SetPosition(0, origin);
+        canTap = false;
+        yield return new WaitForSeconds(0.3f);
+        canTap = true;
+    }
+
+    private void TryToStartGame()
+    {
+        if (CreateLargestInnerRectangle(playAreaPoints))
+        {
+            StartGame();
+        }
+    }
+
+    private void ShowBallPreview(Vector3 position, bool result)
+    {
         if (result)
         {
-            laserPointer.SetPosition(1, hit);
+            pointPreviewPrefab.SetActive(true);
+            pointPreviewPrefab.transform.position = position;
         }
         else
         {
-            laserPointer.SetPosition(1, origin + direction * laserMaxDistance);
+            pointPreviewPrefab.SetActive(false);
         }
     }
     
@@ -146,7 +197,7 @@ public class PlayAreaSelector : MonoBehaviour
             
             // Set plane dimensions and position
             Vector3 planeSize = new Vector3(bounds.length_a / 10f, 1f, bounds.length_b / 10f);
-            Vector3 colliderSize = new Vector3(bounds.length_a, 2f, bounds.length_b);
+            Vector3 colliderSize = new Vector3(bounds.length_a, Camera.main.transform.position.y + 0.5f, bounds.length_b);
             
             Vector3 center = new (bounds.centre.x, 0, bounds.centre.y);
 
@@ -154,31 +205,31 @@ public class PlayAreaSelector : MonoBehaviour
             plane.transform.position = center;
             plane.transform.localScale = planeSize;
             plane.transform.rotation = Quaternion.Euler(0, angle, 0);
-            plane.transform.parent = transform;
+            plane.transform.SetParent(GameObject.Find("OVRCameraRig").transform);
             
-            plane.GetComponent<Renderer>().material.color = Color.green;
+            plane.GetComponent<Renderer>().material = planeMaterial;
             plane.name = "TrackedSpacePlane";
+            // plane.GetComponent<MeshCollider>().enabled = false;
+            // plane.layer = LayerMask.GetMask("locomotion");
             
 
             GameObject collider = new();
-            collider.transform.position = center + new Vector3(0f, 1f, 0f);
-            collider.transform.localScale = colliderSize;
+            collider.transform.position = center + new Vector3(0, colliderSize.y / 2, 0);
             collider.transform.rotation = Quaternion.Euler(0, angle, 0);
-            collider.transform.parent = transform;
+            collider.transform.localScale = new Vector3(1f, 1f, 1f);
+            collider.transform.SetParent(GameObject.Find("OVRCameraRig").transform);
+            collider.layer = LayerMask.NameToLayer("locomotion");
 
             collider.AddComponent<BoxCollider>();
+            collider.GetComponent<BoxCollider>().size = colliderSize;
             collider.AddComponent<ResetTrigger>();
             var resetTrigger = collider.GetComponent<ResetTrigger>();
             resetTrigger.bodyCollider = collider.GetComponent<BoxCollider>();
-            resetTrigger.RESET_TRIGGER_BUFFER = 0.0f;
+            resetTrigger.RESET_TRIGGER_BUFFER = 0.05f;
+            resetTrigger.Initialize();
             collider.name = "ResetCollider";
             return true;
         }
-        else
-        {
-            // TODO add an visual error message and empty the list of points, also remove drawn points
-            return false;
-        }
-        
+        return false;
     }
 }

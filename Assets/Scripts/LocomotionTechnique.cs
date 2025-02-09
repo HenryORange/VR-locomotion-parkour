@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class LocomotionTechnique : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class LocomotionTechnique : MonoBehaviour
     [SerializeField] private Vector3 offset;
     [SerializeField] private bool isIndexTriggerDown;
 
+    private Rigidbody rb;
 
     /////////////////////////////////////////////////////////
     // These are for the game mechanism.
@@ -22,7 +24,7 @@ public class LocomotionTechnique : MonoBehaviour
     
     void Start()
     {
-        
+        rb = GetComponent<Rigidbody>();
     }
 
     void Update()

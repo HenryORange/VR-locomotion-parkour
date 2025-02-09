@@ -51,7 +51,7 @@ public class InteractionTechnique : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (handSkeleton == null || selectionTaskMeasure == null || hmdTransform == null) return;
+        if (!handSkeleton.IsInitialized || selectionTaskMeasure == null || hmdTransform == null) return;
 
         var rightHandRotation = transform.rotation * OVRInput.GetLocalControllerRotation(OVRInput.Controller.RHand);
         // rightHandPosition =

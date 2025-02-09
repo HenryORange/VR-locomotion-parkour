@@ -1,6 +1,8 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Oculus.Interaction;
 using Redirection;
 using TMPro;
@@ -69,17 +71,33 @@ public class RedirectionManager : MonoBehaviour
 
     [HideInInspector] public bool inReset = false;
 
+    private bool canReset = true;
+
     [HideInInspector] public string startTimeOfProgram;
 
     private float simulatedTime = 0;
 
-    private float velocity = 0;
+    public float velocity = 0;
+    
+    private const float GroundFriction = (float)(0.005 * 9.81);
 
-    private float[,] velocityRange = { { 1, 5 }, { 10, 15 }, { 20, 25 } };
+    private float[,] velocityRange = { { 3, 5 }, { 8, 10 }, { 12, 15 } };
+
+    private class VelocityVector
+    {
+        public Vector3 Direction;
+        public float Velocity;
+
+        public VelocityVector(Vector3 direction, float velocity)
+        {
+            Direction = direction;
+            Velocity = velocity;
+        }
+    }
+    
+    private List<VelocityVector> velocities = new List<VelocityVector>();
 
     private Camera camera;
-
-    private Vector2 thumbstickInput;
 
     public enum SpeedStates
     {
@@ -96,6 +114,11 @@ public class RedirectionManager : MonoBehaviour
     public GameObject slowButtonText;
     public GameObject mediumButtonText;
     public GameObject fastButtonText;
+    public GameObject spinButtonText;
+
+    public ActiveStateSelector thumbsDown;
+    public ParkourCounter parkourCounter;
+    public OVRCameraRig rig;
 
     void Awake()
     {
@@ -146,6 +169,13 @@ public class RedirectionManager : MonoBehaviour
         {
             MOVEMENT_CONTROLLER = MovementController.AutoPilot;
         }
+
+        thumbsDown.WhenSelected += () =>
+        {
+            if (!parkourCounter.parkourStart) return;
+            rig.transform.position = parkourCounter.currentRespawnPos;
+            velocities.Clear();
+        };
     }
 
     // Update is called once per frame
@@ -154,10 +184,24 @@ public class RedirectionManager : MonoBehaviour
         var forward = camera.transform.forward;
         forward.y = 0;
         transform.position += forward.normalized * (Time.deltaTime * velocity);
+        var resultingTransform = Vector3.zero;
+        // foreach (var v in velocities)
+        // {
+        //     resultingTransform += v.Direction * (v.Velocity * Time.deltaTime);
+        //     v.Velocity = v.Velocity > 0 ? v.Velocity - GroundFriction : 0;
+        //     Debug.LogWarning(v.Velocity);
+        // }
+        // velocities.RemoveAll(v => v.Velocity == 0);
+        //
+        // transform.position += resultingTransform;
 
-        const float groundFriction = (float)(0.005 * 9.81);
+        velocity = velocity > 0 ? velocity - GroundFriction : 0;
+    }
 
-        velocity = velocity > 0 ? velocity - groundFriction : 0;
+    public void RedirectionToggle()
+    {
+        spinButtonText.GetComponent<TextMeshPro>().color = canReset ? unselectedColor : selectedColor;
+        canReset = !canReset;
     }
 
     public void OnSlowSelected()
@@ -417,7 +461,7 @@ public class RedirectionManager : MonoBehaviour
     public void OnResetTrigger()
     {
         //print("RESET TRIGGER");
-        if (inReset)
+        if (inReset || !canReset)
             return;
         //print("NOT IN RESET");
         //print("Is Resetter Null? " + (resetter == null));
@@ -434,6 +478,7 @@ public class RedirectionManager : MonoBehaviour
         //print("RESET END");
         resetter.FinalizeReset();
         velocity = Random.Range(velocityRange[(int)currentSpeedState, 0], velocityRange[(int)currentSpeedState, 1]);
+        // velocities.Add(new VelocityVector(camera.transform.forward.normalized, velocity));
         inReset = false;
     }
 
