@@ -14,17 +14,16 @@ public class LocomotionTechnique : MonoBehaviour
     [SerializeField] private Vector3 offset;
     [SerializeField] private bool isIndexTriggerDown;
 
-    private Rigidbody rb;
-
     /////////////////////////////////////////////////////////
     // These are for the game mechanism.
     public ParkourCounter parkourCounter;
     public string stage;
     public SelectionTaskMeasure selectionTaskMeasure;
-    
+    public GameObject tutorialInteraction;
+
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        tutorialInteraction.SetActive(false);
     }
 
     void Update()
@@ -111,6 +110,7 @@ public class LocomotionTechnique : MonoBehaviour
             selectionTaskMeasure.taskUI.transform.LookAt(tmpTarget);
             selectionTaskMeasure.taskUI.transform.Rotate(new Vector3(0, 180f, 0));
             selectionTaskMeasure.taskStartPanel.SetActive(true);
+            tutorialInteraction.SetActive(true);
         }
         else if (other.CompareTag("coin"))
         {

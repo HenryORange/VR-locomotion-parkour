@@ -40,6 +40,8 @@ public class PlayAreaSelector : MonoBehaviour
     public ActiveStateSelector startGamePose;
     public ActiveStateSelector resetAreaSelectionPose;
     public Material planeMaterial;
+    public GameObject tutorialMovement;
+    public GameObject tutorialSpheres;
 
     private enum State
     {
@@ -58,6 +60,7 @@ public class PlayAreaSelector : MonoBehaviour
         speedSelectorScript.enabled = false;
         snowGenerator.enabled = false;
         taskUICanvas.SetActive(false);
+        tutorialMovement.SetActive(false);
         state = State.Setup;
 
         startGamePose.WhenSelected += TryToStartGame;
@@ -100,6 +103,7 @@ public class PlayAreaSelector : MonoBehaviour
         speedSelectorScript.enabled = true;
         snowGenerator.enabled = true;
         taskUICanvas.SetActive(true);
+        tutorialMovement.SetActive(true);
         
         resetAreaSelectionPose.WhenSelected -= ClearAreaPoints;
         
@@ -107,6 +111,7 @@ public class PlayAreaSelector : MonoBehaviour
         state = State.Finished;
         foreach(var sphere in playAreaSpheres) sphere.SetActive(false);
         pointPreviewPrefab.SetActive(false);
+        tutorialSpheres.SetActive(false);
         
         // enable redirected walking
         var redirection = redirectedUser.GetComponent<RedirectionManager>();
@@ -207,7 +212,8 @@ public class PlayAreaSelector : MonoBehaviour
             plane.transform.rotation = Quaternion.Euler(0, angle, 0);
             plane.transform.SetParent(GameObject.Find("OVRCameraRig").transform);
             
-            plane.GetComponent<Renderer>().material = planeMaterial;
+            // plane.GetComponent<Renderer>().material = planeMaterial;
+            plane.GetComponent<Renderer>().enabled = false;
             plane.name = "TrackedSpacePlane";
             // plane.GetComponent<MeshCollider>().enabled = false;
             // plane.layer = LayerMask.GetMask("locomotion");
