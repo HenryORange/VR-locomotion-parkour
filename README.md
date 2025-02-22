@@ -3,7 +3,11 @@
 ## Demo Video
 
 My 2025 version of the [VR-locomotion-parkour](https://github.com/wenjietseng/VR-locomotion-parkour) with my own locomotion and interaction technique.
-<video src="./DemoVideo.mp4" width="1280" height="720" controls></video>
+<iframe width="1280" height="720"
+src="https://www.youtube.com/embed/BSC1vMCfADU"
+frameborder="0"
+allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+allowfullscreen></iframe>
 
 ## APK
 The game's apk can be found <a href="https://github.com/HenryORange/VR-locomotion-parkour/releases/tag/v1.0.0">here</a> so you can try it for yourself.
@@ -32,6 +36,11 @@ The game's apk can be found <a href="https://github.com/HenryORange/VR-locomotio
 ### Cybersickness reduction
 
 - [Ginger VR](https://github.com/angsamuel/GingerVR) Note: This repo seems not being maintained anymore. Still, it can be a reference for implementing your cybersickness reduction technique.
+
+### Conceptual Help
+
+- [Largest Interior Rectangle](https://github.com/Evryway/lir)
+- [Redirected Walking Toolkit](https://github.com/USC-ICT-MxR/RDWT)
 
 ### Scene
 
