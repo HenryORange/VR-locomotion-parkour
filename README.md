@@ -1,37 +1,19 @@
-# VR-locomotion-parkour
+# VR-Redirected-Winter
 
 ## Demo Video
 
-2022 with Object Interaction Task
+My 2025 version of the [VR-locomotion-parkour](https://github.com/wenjietseng/VR-locomotion-parkour) with my own locomotion and interaction technique.
+<video src="./DemoVideo.mp4" width="1280" height="720" controls></video>
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=ZVDoHTefdR0
-" target="_blank"><img src="http://img.youtube.com/vi/ZVDoHTefdR0/0.jpg" 
-alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
-
-
-2021 Version
-
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=5s-vTwTFc7U
-" target="_blank"><img src="http://img.youtube.com/vi/5s-vTwTFc7U/0.jpg" 
-alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
-
-## How to Start
-
-```{bash}
-git clone https://github.com/wenjietseng/VR-locomotion-parkour.git
-```
-
-- download the GitHub repo and open __VRParkour__ folder as a Unity project
-- implement your locomotion technique in `LocomotionTechnique.cs`
-- Selection...
-- play and see how fast and how many coins you can get!
+## APK
+The game's apk can be found <a href="https://github.com/HenryORange/VR-locomotion-parkour/releases/tag/v1.0.0">here</a> so you can try it for yourself.
 
 ## Misc
 
 ### Core
 
 - Unity 6000.0.23f1 LTS
-- Meta XR All-in-One SDK 69.0.1
+- Meta XR All-in-One SDK 71.0.0
 - Oculus XR Plugin 4.3.0
 
 ### Rendering settings
@@ -55,10 +37,13 @@ git clone https://github.com/wenjietseng/VR-locomotion-parkour.git
 
 - [Low Poly Ultimate Pack](https://assetstore.unity.com/packages/3d/props/low-poly-ultimate-pack-54733)
 - [Forest - Low Poly Toon Battle Arena / Tower Defense Pack](https://assetstore.unity.com/packages/3d/environments/forest-low-poly-toon-battle-arena-tower-defense-pack-100080)
+- [Quick Outline](https://assetstore.unity.com/packages/tools/particles-effects/quick-outline-115488)
+- [Shader Snow Layers](https://github.com/daniel-ilett/shaders-snow-layers)
 
 ### Sound effect and music
 
-- Winner Winner Funky Chicken Dinner (YouTube Audio Library)
+- [ambient christmas](https://freesound.org/people/AudioCoffee/sounds/770696/)
+- [ice cracking](https://freesound.org/people/wwstudioswastaken/sounds/624163/)
 - [tone beep](https://freesound.org/people/pan14/sounds/263133/)
 - [crowd yay](https://freesound.org/people/mlteenie/sounds/169233/)
 
