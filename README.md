@@ -3,11 +3,8 @@
 ## Demo Video
 
 My 2025 version of the [VR-locomotion-parkour](https://github.com/wenjietseng/VR-locomotion-parkour) with my own locomotion and interaction technique.
-<iframe width="1280" height="720"
-src="https://www.youtube.com/embed/BSC1vMCfADU"
-frameborder="0"
-allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-allowfullscreen></iframe>
+<iframe width="1280" height="720" src="https://www.youtube.com/embed/BSC1vMCfADU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 
 ## APK
 The game's apk can be found <a href="https://github.com/HenryORange/VR-locomotion-parkour/releases/tag/v1.0.0">here</a> so you can try it for yourself.
